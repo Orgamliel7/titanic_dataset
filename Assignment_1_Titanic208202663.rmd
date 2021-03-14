@@ -1,0 +1,210 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r}
+
+################################################################################
+## R Basics Assignment #1 - Titanic passenger list 
+## Date: 01-03-21
+################################################################################
+
+
+############
+# Notation #
+############
+# :) Good Practice
+# :( Poor Practice
+# *( Not Working
+
+
+##################
+# Initialization #
+##################
+rm(list = ls()) # :) remove all variables from global environment
+cat("\014") # clear the screen
+
+################
+# Get the data #
+################
+## Check where is the currently working directory path
+getwd()
+## Change the working directory if necessary
+#setwd("C:\\Users\\Anat\\\R_Code_and_Data")
+## Create file path
+setwd("C:\\org\\task1R")
+
+file_path = file.path(getwd(),"titanic_dataset") # :) construct platform independent path
+## Read the csv file into data.frame
+dataset = read.csv("titanic_dataset.csv", na.strings="")
+head(dataset,5) # Show the first 5 rows of the dataset
+
+
+#######################
+# Data pre-processing #
+#######################
+## Convert "Survived" into factor variable
+class(dataset$Survived)
+dataset[,"Survived"] = factor(dataset[,"Survived"], levels=c(0,1), labels=c("No","Yes")) # :) robust to col location changes
+#dataset$Survived     = factor(dataset[,"Survived"], levels=c(0,1), labels=c("No","Yes")) # 
+#dataset[,16]         = factor(dataset[,"Survived"], levels=c(0,1), labels=c("No","Yes")) # :( col number might change
+class(dataset$Survived) # Validate the change; should print "factor"
+
+```
+
+```{r}
+
+#######################
+# Dataset exploration #
+#######################
+dim(dataset)     # Dimensions of the dataset
+str(dataset)     # Structure of the dataset
+summary(dataset) # 5 Five-number summary + mean
+
+```
+
+```{r}
+
+
+##############
+# Question 1 #
+##############
+## How many males and females are on board?
+
+# ********* WRITE YOUR CODE HERE************
+sex = dataset$Sex # ניכנס לקטגוריית המגדר בכדי להבחין בתוכה כמה בסיפון גברים וכמה נשים
+maleCounter = sum(sex=="male") # נסכום את כמות ההופעות של גברים בטבלת הנתונים
+femaleCounter = length(sex)-maleCounter # כמות הנשים תהיה בהכרח כמות השוהים בספינה פחות הגברים שסכמנו קודם
+cat(maleCounter,femaleCounter) # cat is Concatenate and Print , prints atomic types (logical, integer, real, complex, character) and names 
+
+## Show a bar plot titled "Passenger gender distribution" that presents the number of passengers by gender
+
+# ********* WRITE YOUR CODE HERE************
+x = c(maleCounter,femaleCounter) # c - create a vector with the values we have provide explicitly , נכניס לה את כמות הגברים והנשים
+y = c("male", "female") # עמודת הוואי תהיה גבר או אישה 
+barplot(x,names.arg = y) # barplot - represents data in rectangular bars with length of the bar proportional to the value of the variable. יוצרת טבלת עמודות
+```
+
+```{r}
+
+##############
+# Question 2 #
+##############
+## How many kids (passengers under the age 18) are on board?
+
+# ********* WRITE YOUR CODE HERE ************
+filterData = dataset[!is.na(dataset$Age),] # In R, missing values are represented by the symbol NA (not available) אז נלך למה שכן זמין לנו בטבלת הגילאים כדי לסנן ממנה
+numberOfKiddos = sum(filterData$Age < 18) # נבקש מהמשתנה שלנו לסכום לתוך הדאטה-סט רק חבר'ה שהם מתחת לגיל 18  
+cat("The number of kids is: ", numberOfKiddos) # הדפסת התוצאה
+```
+
+```{r}
+
+##############
+# Question 3 #
+##############
+## How many males and females kids are on board?
+
+# ********* WRITE YOUR CODE HERE************
+filterData = dataset[!is.na(dataset$Age),] # ניצור שוב דאטה-סט שתחזיק נתונים נדרשים וממנה נפלטר
+numberOfBoys = sum(filterData$Age < 18 & filterData$Sex == "male") # ספירת הילדים הבנים תבוא לידי ביטוי בשתי התנאים הנ"ל שצריכים להתקיים
+numberOfGirls = sum(filterData$Age < 18 & filterData$Sex == "female")
+cat("The number of boys is: ", numberOfBoys, " and number of girls is: ", numberOfGirls) # נדפיס את המידע ששמרנו בתוך המשתנים
+
+
+## display a bar plot titled "Children gender distribution (without adults)"
+
+# ********* WRITE YOUR CODE HERE************
+
+x = c(numberOfBoys,numberOfGirls) # קומבינציה של המידע כדי לייצג בטבלת עמודות - ציר איקס
+y = c("boys", "girls")  # Y ציר ה
+barplot(x,names.arg = y, main = "Children gender distribution (without adults)")
+
+```
+
+```{r}
+
+##############
+# Question 4 #
+##############
+## Display the tickets costs for the different classes, use a boxplot entitled "Fare Box Plot"
+
+# ********* WRITE YOUR CODE HERE************
+ClassPlusFare = data.frame(pClass = dataset$Pclass, Fare = dataset$Fare) #   נסדר במחלקה מיוחדת מסגרת נתונים שתכיל את מחירי הכרטיסים , פי קלאס זו מחלקת הנוסעים
+boxplot(ClassPlusFare$Fare~ClassPlusFare$pClass, main = "Fare Box Plot") # נייצג את הנתונים בטבלה כאשר האיקס זה סוגי המחלקה והוואי זה מחיר הכרטיס
+```
+
+```{r}
+
+##############
+# Question 5 #
+##############
+## Who were the passengers who traveled for free (Fare == 0)? What are their honor titles?
+
+# ********* WRITE YOUR CODE HERE***********
+connectedPeople = dataset$Name[dataset$Fare == 0 ] # סינון של האנשים ע"פ הבדיקה שעלות הכרטיס שלהם היא אפס
+titles = sub(".*?, (.*?). .*", "\\1", connectedPeople) # sub - used to replace the string in a vector or a data frame with the input or the specified string.
+connectedPeople
+titles
+barplot(table(titles)) # הצגת הנתונים כנדרש
+```
+
+```{r}
+
+##############
+# Question 6 #
+##############
+## What are the most outrageous ticket prices the passengers paid (outliers)?
+## see https://en.wikipedia.org/wiki/Outlier. Calculate the outlier range using Tukey's fences and ticket prices above it. 
+
+
+# ********* WRITE YOUR CODE HERE************
+class1 = ClassPlusFare[ClassPlusFare$pClass == 1, ]$Fare # סיווג לפי שלושת דרגות עלות הכרטיס נסיעה
+class2 = ClassPlusFare[ClassPlusFare$pClass == 2, ]$Fare
+class3 = ClassPlusFare[ClassPlusFare$pClass == 3, ]$Fare
+
+
+summary1 = summary(class1)[5] #  summary - produce result summaries of the results of various model fitting functions.
+IQR1 = IQR(class1) # xמחשבת טווח בין-רבעוני של ערכי ה 
+outlier1 = summary1 + 1.5*IQR1   # היוצאים מן הכלל במחלקה 1
+
+summary2 = summary(class2)[5]
+IQR2 = IQR(class2)
+outlier2 = summary2 + 1.5*IQR2
+
+summary3 = summary(class3)[5]
+IQR3 = IQR(class3)
+outlier3 = summary3 + 1.5*IQR3
+
+cat(" The outrageous ticket prices for class 1")
+sort(class1[class1>outlier1])
+cat(" The outrageous ticket prices for class 2")
+sort(class2[class2>outlier2])
+cat(" The outrageous ticket prices for class 3")
+sort(class3[class3>outlier3])
+```
+
+```{r}
+
+##############
+# Question 7 #
+##############
+## What are the costs of first class tickets?
+
+# ********* WRITE YOUR CODE HERE************
+
+
+class1
+
+## display a histogram entitled "1st class fare"
+hist(class1, breaks = 50, main = "1st class fare", xlab = "Fare") # hist יוצרת היסטוגרמה
+
+## display a histogram entitled 1st class log fare" (add 1 to the price to avoid log(0)=-Inf)
+
+# ********* WRITE YOUR CODE HERE************
+class1PlusOne = (class1 + 1)
+class1Log = log(class1PlusOne, base = 10)
+hist(class1Log, breaks = 50, main = "1st class log fare", xlab = "Log Fare")
+
+```
